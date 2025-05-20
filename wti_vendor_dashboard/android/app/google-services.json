@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565159716218",
+    "project_id": "wti-vendor-dashboard",
+    "storage_bucket": "wti-vendor-dashboard.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565159716218:android:9bd33f5b798be2001222c3",
+        "android_client_info": {
+          "package_name": "com.example.wti_vendor_dashboard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4_ryA7WgwR7uin8-iMLrLfS4ufXhKA5s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
