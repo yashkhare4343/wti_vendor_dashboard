@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/main.dart';
 import 'package:wti_vendor_dashboard/common_widgets/buttons/primary_button.dart';
 import 'package:wti_vendor_dashboard/common_widgets/image/editable_image_card.dart';
+import 'package:wti_vendor_dashboard/common_widgets/image/image_card.dart';
 import 'package:wti_vendor_dashboard/common_widgets/loader/loader.dart';
 import 'package:wti_vendor_dashboard/common_widgets/textformfield/edit_form_field/edit_form_field.dart';
 import 'package:wti_vendor_dashboard/common_widgets/textformfield/search_form/search_input_field.dart';
@@ -90,7 +91,6 @@ class _AllDriverState extends State<AllDriver>
   }
 
   // pending bottom sheet
-
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +206,7 @@ class _AllDriverState extends State<AllDriver>
                   child: TabBarView(
                     controller: _tabController,
                     children: tabNames.map((tabName) {
-                      return PendingList(
+                      return DriverList(
                         selectedValued: _selectedValue ?? '',
                         searchedText: driverController.text,
                         status: status,
@@ -257,13 +257,13 @@ class _CustomPainter extends BoxPainter {
   }
 }
 
-class PendingList extends StatefulWidget {
+class DriverList extends StatefulWidget {
   final String selectedValued;
   final String searchedText;
   final String status;
   final void Function()? onTap;
 
-  const PendingList({
+  const DriverList({
     super.key,
     required this.selectedValued,
     required this.searchedText,
@@ -272,14 +272,15 @@ class PendingList extends StatefulWidget {
   });
 
   @override
-  State<PendingList> createState() => _PendingListState();
+  State<DriverList> createState() => _DriverListState();
 }
 
-class _PendingListState extends State<PendingList> {
+class _DriverListState extends State<DriverList> {
   final FetchDriverController fetchDriverController =
       Get.put(FetchDriverController());
 
-  final UpdateDriverDocController updateDriverDocController = Get.put(UpdateDriverDocController());
+  final UpdateDriverDocController updateDriverDocController =
+      Get.put(UpdateDriverDocController());
 
   @override
   void initState() {
@@ -292,16 +293,31 @@ class _PendingListState extends State<PendingList> {
     });
   }
 
-  void _pendingBottomSheet(BuildContext context, String name, String mobileNo, String licenseNo, String date, String driverPhoto, String driverLicenseFront, String driverLicenseBack, String driverLicenceExpire, String driverIdProofFront, String driverIdProofBack, String driverPccPhoto, String driverId) {
 
+  void _driverDetailsBottomSheet(
+      BuildContext context,
+      String name,
+      String mobileNo,
+      String licenseNo,
+      String date,
+      String driverPhoto,
+      String driverLicenseFront,
+      String driverLicenseBack,
+      String driverLicenceExpire,
+      String driverIdProofFront,
+      String driverIdProofBack,
+      String driverPccPhoto,
+      String driverId,
+      String status) {
     final TextEditingController driverName = TextEditingController(text: name);
     final TextEditingController mobileNumber =
-    TextEditingController(text: mobileNo);
+        TextEditingController(text: mobileNo);
     final TextEditingController licenseNumber =
-    TextEditingController(text: licenseNo);
-    final TextEditingController dateController = TextEditingController(text: date);
-    final UploadDriverDocumentController uploadDriverDocumentController = Get.put(UploadDriverDocumentController());
-
+        TextEditingController(text: licenseNo);
+    final TextEditingController dateController =
+        TextEditingController(text: date);
+    final UploadDriverDocumentController uploadDriverDocumentController =
+        Get.put(UploadDriverDocumentController());
 
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -314,6 +330,23 @@ class _PendingListState extends State<PendingList> {
         return await secureStorage.read(key: key);
       }
     }
+
+    Future<void> clearSpecificKeys(List<String> keys) async {
+      if (Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        for (String key in keys) {
+          await prefs.remove(key);
+        }
+      } else {
+        final secureStorage = FlutterSecureStorage();
+        for (String key in keys) {
+          await secureStorage.delete(key: key);
+        }
+      }
+
+      print("✅ Selected keys cleared from local storage");
+    }
+
 
     showModalBottomSheet(
       backgroundColor: AppColors.scaffoldBgPrimary,
@@ -359,6 +392,7 @@ class _PendingListState extends State<PendingList> {
                             label: 'Driver Name',
                             controller: driverName,
                             onChanged: (value) {},
+                            status: status,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Driver name is required';
@@ -370,10 +404,11 @@ class _PendingListState extends State<PendingList> {
                           SizedBox(height: 16),
 
                           /// Driver Photograph
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverPhoto, label: 'Driver Photograph') : EditableImageCard(
                             label: 'Driver Photograph',
                             imageUrl: driverPhoto,
-                            onEdit: () {}, imageKey: 'driverPhotograph',
+                            onEdit: () {},
+                            imageKey: 'driverPhotograph',
                           ),
 
                           SizedBox(height: 16),
@@ -383,6 +418,7 @@ class _PendingListState extends State<PendingList> {
                             label: 'Mobile Number',
                             controller: mobileNumber,
                             onChanged: (value) {},
+                            status: status,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Mobile number is required';
@@ -397,10 +433,11 @@ class _PendingListState extends State<PendingList> {
                           SizedBox(height: 16),
 
                           /// License Photo
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverLicenseFront, label: 'Driver Licence Photo (Front)') : EditableImageCard(
                             label: 'Driver Licence Photo (Front)',
                             imageUrl: driverLicenseFront,
-                            onEdit: () {}, imageKey: 'driverLicenceFrontKey',
+                            onEdit: () {},
+                            imageKey: 'driverLicenceFrontKey',
                           ),
 
                           SizedBox(height: 16),
@@ -410,6 +447,7 @@ class _PendingListState extends State<PendingList> {
                             label: 'License Id Number',
                             controller: licenseNumber,
                             onChanged: (value) {},
+                            status: status,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'License number is required';
@@ -419,10 +457,11 @@ class _PendingListState extends State<PendingList> {
                           ),
 
                           SizedBox(height: 16),
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverLicenseBack, label: 'Driver Licence Photo (Back)') :  EditableImageCard(
                             label: 'Driver Licence Photo (Back)',
                             imageUrl: driverLicenseBack,
-                            onEdit: () {}, imageKey: 'driverLicenceBackKey',
+                            onEdit: () {},
+                            imageKey: 'driverLicenceBackKey',
                           ),
                           SizedBox(height: 16),
                           Row(
@@ -435,7 +474,8 @@ class _PendingListState extends State<PendingList> {
                                     suffixIcon: Icon(Icons.calendar_today),
                                   ),
                                   onTap: () async {
-                                    final DateTime? picked = await showDatePicker(
+                                    final DateTime? picked =
+                                        await showDatePicker(
                                       context: context,
                                       initialDate: DateTime.now(),
                                       firstDate: DateTime(2000),
@@ -444,25 +484,26 @@ class _PendingListState extends State<PendingList> {
 
                                     if (picked != null) {
                                       dateController.text =
-                                      "${picked.day}/${picked.month}/${picked.year}";
+                                          "${picked.day}/${picked.month}/${picked.year}";
                                     }
                                   },
                                 ),
                               ),
-
                             ],
                           ),
                           SizedBox(height: 16),
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverIdProofFront, label: 'Driver Idproof Front Photo') :  EditableImageCard(
                             label: 'Driver Idproof Front Photo',
                             imageUrl: driverIdProofFront,
-                            onEdit: () {}, imageKey: 'driverIdproofFront',
+                            onEdit: () {},
+                            imageKey: 'driverIdproofFront',
                           ),
                           SizedBox(height: 16),
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverIdProofBack, label: 'Driver Idproof Back Photo') : EditableImageCard(
                             label: 'Driver Idproof Back Photo',
                             imageUrl: driverIdProofBack,
-                            onEdit: () {}, imageKey: 'driverIdproofBack',
+                            onEdit: () {},
+                            imageKey: 'driverIdproofBack',
                           ),
                           SizedBox(height: 16),
                           Column(
@@ -471,11 +512,15 @@ class _PendingListState extends State<PendingList> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Text('Driver License Expiry Date', textAlign: TextAlign.start, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Driver License Expiry Date',
+                                      textAlign: TextAlign.start,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text(driverLicenceExpire,textAlign: TextAlign.start),
+                              Text(driverLicenceExpire,
+                                  textAlign: TextAlign.start),
                             ],
                           ),
                           SizedBox(height: 16),
@@ -486,19 +531,23 @@ class _PendingListState extends State<PendingList> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Text('Driver Register Status', textAlign: TextAlign.start, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Driver Register Status',
+                                      textAlign: TextAlign.start,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('Pending',textAlign: TextAlign.start),
+                              Text('Pending', textAlign: TextAlign.start),
                             ],
                           ),
                           SizedBox(height: 16),
 
-                          EditableImageCard(
+                          status =='Verify'? ImageCard(imageUrl: driverPccPhoto, label: 'Driver pcc Photo') : EditableImageCard(
                             label: 'Driver pcc Photo',
                             imageUrl: driverPccPhoto,
-                            onEdit: () {}, imageKey: 'driverPcc',
+                            onEdit: () {},
+                            imageKey: 'driverPcc',
                           ),
                           SizedBox(height: 16),
 
@@ -508,11 +557,14 @@ class _PendingListState extends State<PendingList> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Text('Driver Idproof Type', textAlign: TextAlign.start, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Driver Idproof Type',
+                                      textAlign: TextAlign.start,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('ProofType',textAlign: TextAlign.start),
+                              Text('ProofType', textAlign: TextAlign.start),
                             ],
                           ),
                           SizedBox(height: 16),
@@ -522,11 +574,14 @@ class _PendingListState extends State<PendingList> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Text('Message', textAlign: TextAlign.start, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Message',
+                                      textAlign: TextAlign.start,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('',textAlign: TextAlign.start),
+                              Text('', textAlign: TextAlign.start),
                             ],
                           ),
 
@@ -535,22 +590,72 @@ class _PendingListState extends State<PendingList> {
                           Spacer(),
 
                           /// Submit Button
-                          SizedBox(
+                         status =='Verify'? SizedBox() : SizedBox(
                             width: double.infinity,
                             child: PrimaryButton(
                               text: 'Submit',
-                              onPressed: () async{
+                              onPressed: () async {
                                 if (formKey.currentState!.validate()) {
-                                  final driverPic =  await readData('driverPhotograph');
-                                  final licencePicFront = await readData('driverLicenceFrontKey');
-                                  final licencePicBack = await readData('driverLicenceBackKey');
-                                  final driverIdProofFront = await readData('driverIdproofFront');
-                                  final driveIdProofBack = await readData('driverIdproofBack');
-                                  final drivePcc = await readData('driverPcc');
+                                  // Check each image key and decide whether to use uploaded or fetched image
+                                  final driverPic =
+                                      await readData('driverPhotograph') ??
+                                          driverPhoto;
+                                  final licencePicFront =
+                                      await readData('driverLicenceFrontKey') ??
+                                          driverLicenseFront;
+                                  final licencePicBack =
+                                      await readData('driverLicenceBackKey') ??
+                                          driverLicenseBack;
+                                  final driverIdProofFrontPic =
+                                      await readData('driverIdproofFront') ??
+                                          driverIdProofFront;
+                                  final driverIdProofBackPic =
+                                      await readData('driverIdproofBack') ??
+                                          driverIdProofBack;
+                                  final driverPccPic =
+                                      await readData('driverPcc') ??
+                                          driverPccPhoto;
 
-                                  updateDriverDocController.updateDriverDetails(driverName.text, mobileNumber.text, dateController.text, driverPic??'', licenseNumber.text, licencePicFront??'', licencePicBack??'', driverLicenceExpire, driverIdProofFront??'', driveIdProofBack??'', drivePcc??'', 'Pending', '', driverId, context).then((value){
-                                    fetchDriverController.fetchDriver('', '', 'Pending', context);
+                                  await updateDriverDocController
+                                      .updateDriverDetails(
+                                    driverName.text,
+                                    mobileNumber.text,
+                                    dateController.text,
+                                    driverPic,
+                                    licenseNumber.text,
+                                    licencePicFront,
+                                    licencePicBack,
+                                    driverLicenceExpire,
+                                    driverIdProofFrontPic,
+                                    driverIdProofBackPic,
+                                    driverPccPic,
+                                    status,
+                                    '',
+                                    driverId,
+                                    context,
+                                  )
+                                      .then((value) {
+                                    fetchDriverController.fetchDriver(
+                                        '', '', status, context).then((value) async{
+                                      await clearSpecificKeys([
+                                        'driverPhotograph',
+                                        'driverLicenceFrontKey',
+                                        'driverLicenceBackKey',
+                                        'driverIdproofFront',
+                                        'driverIdproofBack',
+                                        'driverPcc',
+                                      ]);
+                                    });
+                                  }).then((value){
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        duration: Duration(milliseconds: 500),
+                                        content: Text('Driver Added Successfully', style: CommonFonts.primaryButtonText),
+                                        backgroundColor: Colors.green[300],
+                                      ),
+                                    );
                                   });
+                                  Future.delayed(Duration(seconds: 1));
 
                                   Navigator.pop(context);
                                 }
@@ -571,9 +676,8 @@ class _PendingListState extends State<PendingList> {
     );
   }
 
-
   @override
-  void didUpdateWidget(covariant PendingList oldWidget) {
+  void didUpdateWidget(covariant DriverList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.status != widget.status ||
         oldWidget.selectedValued != widget.selectedValued ||
@@ -626,18 +730,22 @@ class _PendingListState extends State<PendingList> {
                                   ),
                                 ),
                                 SizedBox(width: 8),
-                                Container(
+                                widget.status == 'Pending'?  Container(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
                                   child: pending(),
+                                ): widget.status == 'Verify'? Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  child: verify(),
+                                ): Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  child: reject(),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 2),
                             // Phone number
                             Text(
                               fetchDriverController.driverResponse.value
@@ -645,7 +753,7 @@ class _PendingListState extends State<PendingList> {
                                   '',
                               style: CommonFonts.bodyText3,
                             ),
-                            SizedBox(height: 4),
+                            SizedBox(height: 8),
                             // License number (partially masked)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -664,7 +772,40 @@ class _PendingListState extends State<PendingList> {
                         // Right side: More options icon
                         GestureDetector(
                           onTap: () {
-                            _pendingBottomSheet(context, fetchDriverController.driverResponse.value?.drivers[index].driverName??'', fetchDriverController.driverResponse.value?.drivers[index].mobileNumber??'', fetchDriverController.driverResponse.value?.drivers[index].licenseIdNumber??'', fetchDriverController.driverResponse.value?.drivers[index].dob??'',fetchDriverController.driverResponse.value?.drivers[index].driverPhoto??'', fetchDriverController.driverResponse.value?.drivers[index].licensePhotoFront??'', fetchDriverController.driverResponse.value?.drivers[index].licensePhotoBack??'', fetchDriverController.driverResponse.value?.drivers[index].licenseExpiryDate??'', fetchDriverController.driverResponse.value?.drivers[index].idProofFrontPhoto??'', fetchDriverController.driverResponse.value?.drivers[index].idProofBackPhoto??'', fetchDriverController.driverResponse.value?.drivers[index].pccPhoto??'' , fetchDriverController.driverResponse.value?.drivers[index].id??'');
+                            _driverDetailsBottomSheet(
+                                context,
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].driverName ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].mobileNumber ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].licenseIdNumber ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].dob ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].driverPhoto ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].licensePhotoFront ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].licensePhotoBack ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].licenseExpiryDate ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].idProofFrontPhoto ??
+                                    '',
+                                fetchDriverController.driverResponse.value
+                                        ?.drivers[index].idProofBackPhoto ??
+                                    '',
+                                fetchDriverController.driverResponse.value?.drivers[index].pccPhoto ?? '',
+                                fetchDriverController.driverResponse.value?.drivers[index].id ?? '', widget.status);
                           },
                           child: Icon(
                             Icons.more_vert,
@@ -681,15 +822,16 @@ class _PendingListState extends State<PendingList> {
   }
 }
 
+// pending
 Widget pending() {
   return Container(
-    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    padding: EdgeInsets.all(4.0),
     decoration: BoxDecoration(
-      color: Colors.green,
+      color: Colors.blue[300],
       borderRadius: BorderRadius.circular(4),
     ),
     child: Text(
-      'Verified',
+      'Pending',
       style: TextStyle(
         color: Colors.white,
         fontSize: 12,
@@ -697,3 +839,42 @@ Widget pending() {
     ),
   );
 }
+
+//verify
+Widget verify() {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: Colors.green[300],
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      'Verify',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+      ),
+    ),
+  );
+}
+
+// rejected
+
+Widget reject() {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: Colors.red[300],
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      'Reject',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+      ),
+    ),
+  );
+}
+
+

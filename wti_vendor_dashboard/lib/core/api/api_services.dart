@@ -37,12 +37,14 @@ class ApiService {
     }
   }
 
+
+
   Future<Map<String, dynamic>> getRequest(String endpoint) async {
     final url = Uri.parse('$baseUrl/$endpoint');
-    final token = await _getToken();
+    final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
     final headers = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+       'Authorization': basicAuth,
     };
 
     try {
@@ -83,14 +85,18 @@ class ApiService {
   Future<Map<String, dynamic>> postRequest(String endpoint, Map<String, dynamic> data, BuildContext context) async {
     final url = Uri.parse('$baseUrl/$endpoint');
     final token = await _getToken();
+    print(url);
+    final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
     final headers = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      'Authorization': basicAuth,
     };
 
     try {
       final response = await http.post(url, headers: headers, body: json.encode(data));
       if (kDebugMode) {
+        print("url is: $url");
+        print("header is: $headers");
         print("Response status code: ${response.statusCode}");
         print("Response body: ${response.body}");
       }
@@ -156,10 +162,11 @@ class ApiService {
 
   Future<UploadImageResponse?> postMultipart(File imageFile) async {
     final String uploadUrl = "http://65.2.66.230:4000/0auth/aws/upload/vendorDriverDocument";
-    final token = await _getToken();
+    final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
 
     final headers = {
-      'Authorization': token != null ? 'Bearer $token' : '',
+      'Content-Type': 'application/json',
+      'Authorization': basicAuth,
     };
 
     var request = http.MultipartRequest('POST', Uri.parse(uploadUrl))
@@ -218,10 +225,11 @@ class ApiService {
 
   Future<Map<String, dynamic>> patchRequest(String endpoint, Map<String, dynamic> data) async {
     final url = Uri.parse('$baseUrl/$endpoint');
-    final token = await _getToken();
+    final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
+
     final headers = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      'Authorization': basicAuth,
     };
 
     try {

@@ -11,7 +11,6 @@ class UnderlineTextFormField extends StatefulWidget {
   final TextInputType keyboardType;
   final void Function(String?)? onChanged;
 
-
   const UnderlineTextFormField({
     super.key,
     required this.controller,
@@ -21,7 +20,8 @@ class UnderlineTextFormField extends StatefulWidget {
     this.onSuffixTap,
     this.validator,
     this.obscureText = false,
-    this.keyboardType = TextInputType.text, this.onChanged,
+    this.keyboardType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -31,7 +31,6 @@ class UnderlineTextFormField extends StatefulWidget {
 class _UnderlineTextFormFieldState extends State<UnderlineTextFormField> {
   late FocusNode _focusNode;
   late bool _isFocused;
-  late bool _obscure;
 
   @override
   void initState() {
@@ -43,7 +42,6 @@ class _UnderlineTextFormFieldState extends State<UnderlineTextFormField> {
         });
       });
     _isFocused = false;
-    _obscure = widget.obscureText;
   }
 
   @override
@@ -57,24 +55,14 @@ class _UnderlineTextFormFieldState extends State<UnderlineTextFormField> {
     return TextFormField(
       controller: widget.controller,
       focusNode: _focusNode,
-      obscureText: _obscure,
+      obscureText: widget.obscureText, // Use widget.obscureText directly
       validator: widget.validator,
       keyboardType: widget.keyboardType,
       onChanged: widget.onChanged,
       decoration: InputDecoration(
         labelText: widget.label,
         prefixIcon: widget.prefixIcon,
-        suffixIcon: widget.suffixIcon != null
-            ? IconButton(
-          icon: widget.suffixIcon??SizedBox(),
-          onPressed: widget.onSuffixTap ??
-                  () {
-                setState(() {
-                  _obscure = !_obscure;
-                });
-              },
-        )
-            : null,
+        suffixIcon: widget.suffixIcon, // Use suffixIcon as provided
         enabledBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.grey.shade400),
         ),

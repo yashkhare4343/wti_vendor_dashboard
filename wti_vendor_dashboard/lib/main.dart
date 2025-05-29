@@ -11,8 +11,8 @@ import 'package:wti_vendor_dashboard/utility/constants/strings/string_constants.
 import 'core/route_management/app_page.dart';
 import 'firebase_options.dart';
 
-
-final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 const AndroidNotificationChannel _channel = AndroidNotificationChannel(
   'high_importance_channel', // Must match AndroidManifest
   'High Importance Notifications',
@@ -28,8 +28,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('🔄 Background message received: ${message.messageId}');
 }
 
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -57,7 +56,8 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> initFCM() async {
     // Request permissions
-    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+    NotificationSettings settings =
+        await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -65,7 +65,8 @@ class _MyAppState extends State<MyApp> {
     print('🛂 User permission status: ${settings.authorizationStatus}');
 
     // Skip APNs handling on iOS simulator
-    if (Platform.isIOS && !Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')) {
+    if (Platform.isIOS &&
+        !Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')) {
       String? apnsToken;
       do {
         apnsToken = await FirebaseMessaging.instance.getAPNSToken();
@@ -85,12 +86,14 @@ class _MyAppState extends State<MyApp> {
     });
 
     // Local notifications
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
     await _localNotificationsPlugin.initialize(initSettings);
 
     await _localNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
     // Foreground
@@ -123,20 +126,21 @@ class _MyAppState extends State<MyApp> {
     });
 
     // Terminated open
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
-      print('🚀 App launched from terminated notification: ${initialMessage.data}');
+      print(
+          '🚀 App launched from terminated notification: ${initialMessage.data}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp.router(
-      routerDelegate: AppPages.router.routerDelegate,
-      routeInformationParser: AppPages.router.routeInformationParser,
-      routeInformationProvider: AppPages.router.routeInformationProvider,
-      title: StringConstants.title,
-    );
+        routerDelegate: AppPages.router.routerDelegate,
+        routeInformationParser: AppPages.router.routeInformationParser,
+        routeInformationProvider: AppPages.router.routeInformationProvider,
+        title: StringConstants.title,
+        debugShowCheckedModeBanner: false);
   }
 }
-

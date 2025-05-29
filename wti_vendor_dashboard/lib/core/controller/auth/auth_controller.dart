@@ -48,15 +48,15 @@ class AuthController extends GetxController {
       isLoading.value = true;
       final apiService = ApiService();
 
-      // Map<String, dynamic> requestData = {
-      //   "Email": email,
-      //   "password": password
-      //   };
-
       Map<String, dynamic> requestData = {
-        "Email": 'gauravgangola444@gmail.com',
-        "password": '123456'
-      };
+        "Email": email,
+        "password": password
+        };
+
+      // Map<String, dynamic> requestData = {
+      //   "Email": 'gauravgangola444@gmail.com',
+      //   "password": '123456'
+      // };
 
       // print('request data is : $requestData');
 

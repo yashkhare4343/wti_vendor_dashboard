@@ -86,6 +86,8 @@ class UpdateDriverDocController extends GetxController {
       updateDriverResponse.value = UpdateDriverDocResponse.fromJson(responseData);
       print('response is: ${updateDriverResponse.value?.toJson()}');
 
+
+
       // mostly using in tracking event
       // await writeData('userExists', authResponse.value?.userExists.toString()?? '');
       // await writeData('token', authResponse.value?.accessToken ?? '');
