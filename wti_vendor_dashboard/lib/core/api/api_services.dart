@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,6 +13,7 @@ import 'package:http/http.dart' as http;
 import '../../utility/constants/fonts/common_fonts.dart';
 import '../model/upload_image/upload_image_response.dart';
 import '../response/api_response.dart';
+import '../route_management/app_routes.dart';
 
 class ApiService {
   // Private constructor for singleton
@@ -27,6 +29,24 @@ class ApiService {
   final String baseUrl = "http://65.2.66.230:4000/0auth";
   final String priceBaseUrl = 'https://global.wticabs.com:4001/0auth/v1';
 
+  Future<void> logout(BuildContext context) async {
+    try {
+      final secureStorage = FlutterSecureStorage();
+      if (Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // Clear all SharedPreferences data
+      } else {
+        await secureStorage.deleteAll(); // Clear all FlutterSecureStorage data
+      }
+      // Navigate to login screen
+      GoRouter.of(context).go(AppRoutes.loginScreen);
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error during logout: $error')),
+      );
+    }
+  }
+
   Future<String?> _getToken() async {
     if (Platform.isIOS) {
       final prefs = await SharedPreferences.getInstance();
@@ -37,21 +57,40 @@ class ApiService {
     }
   }
 
+  Future<String?> _getUid() async {
+    if (Platform.isIOS) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('userid');
+    } else {
+      final secureStorage = FlutterSecureStorage();
+      return await secureStorage.read(key: 'userid');
+    }
+  }
 
 
-  Future<Map<String, dynamic>> getRequest(String endpoint) async {
+
+  Future<Map<String, dynamic>> getRequest(String endpoint,context) async {
+    final token = await _getToken();
+    final uid = await _getUid();
     final url = Uri.parse('$baseUrl/$endpoint');
     final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
     final headers = {
       'Content-Type': 'application/json',
        'Authorization': basicAuth,
+      'x-token': 'Bearer $token',
+      'x-uid': uid??'',
     };
 
     try {
       final response = await http.get(url, headers: headers);
       if (response.statusCode == 200) {
         return json.decode(response.body);
-      } else {
+      }
+      else if(response.statusCode == 403){
+        logout(context);
+        return json.decode(response.body);
+      }
+      else {
         final errorResponse = json.decode(response.body);
         throw Exception(
             "Failed to get data. Status Code: ${response.statusCode}, Error: ${errorResponse['message'] ?? 'Unknown error'}");
@@ -85,11 +124,14 @@ class ApiService {
   Future<Map<String, dynamic>> postRequest(String endpoint, Map<String, dynamic> data, BuildContext context) async {
     final url = Uri.parse('$baseUrl/$endpoint');
     final token = await _getToken();
+    final uid = await _getUid();
     print(url);
     final basicAuth = 'Basic ${base64Encode(utf8.encode('skldjlksdjlksdjf:sdkhdshsdhkjdsf'))}';
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': basicAuth,
+      'x-token': 'Bearer $token',
+      'x-uid': uid??'',
     };
 
     try {
@@ -105,7 +147,12 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return responseData;
-      } else {
+      }
+      else if(response.statusCode == 403){
+
+        return responseData;
+      }
+      else {
         final errorMessage = responseData['message'] ?? "Something went wrong.";
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

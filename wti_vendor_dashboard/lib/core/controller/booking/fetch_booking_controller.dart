@@ -76,14 +76,6 @@ class FetchBookingController extends GetxController {
       // Parse response into BookingResponse model
       allBookingsResponse.value = AllBookingResponse.fromJson(responseData);
 
-      // mostly using in tracking event
-      // for(int i = 0; i < driverResponse.value!.drivers.length;i++){
-      //   await writeData('driverPhotograph', driverResponse.value?.drivers[i].driverPhoto??'');
-      //
-      // }
-      // await writeData('role', authResponse.value?.role ?? '');
-      // await writeData('userid', authResponse.value?.userid ?? '');
-
 
     } catch (error) {
       // print("Error fetching booking data: $error");

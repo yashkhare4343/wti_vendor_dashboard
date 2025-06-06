@@ -15,13 +15,10 @@ class VehicleListController extends GetxController {
   RxString localStartTime = "Loading...".obs;
   RxString selectedVehicleId = ''.obs;
   Rx<Vehicle?> selectedVehicle = Rx<Vehicle?>(null);
-  // ✅ Add this line
-
-  // Reactive variable for UI updates
 
   @override
   void onInit() {
-    super.onInit();// Initialize timezone data
+    super.onInit(); // Initialize timezone data
   }
 
   Future<String?> readData(String key) async {
@@ -48,6 +45,13 @@ class VehicleListController extends GetxController {
       final apiService = ApiService();
       final vendorId = await readData('userid');
 
+      // Check if vendorId is null
+      if (vendorId == null) {
+        errorMessage.value = 'Vendor ID not found in storage';
+        print('Error: Vendor ID is null');
+        return;
+      }
+
       Map<String, dynamic> requestData = {
         "vendorid": vendorId,
         "start_time": startTime,
@@ -57,22 +61,29 @@ class VehicleListController extends GetxController {
       print('Fetching vehicle list with: $requestData');
 
       final responseData = await apiService.postRequest(
-        'Vehicle/getVacantAndVerifiedVehicles',
-        requestData,
-        context
+          'Vehicle/getVacantAndVerifiedVehicles',
+          requestData,
+          context
       );
+
+      print('Raw API response: $responseData');
 
       vehicleListResponse.value = VehicleListResponse.fromJson(responseData);
       print('VehicleList API response: ${vehicleListResponse.value?.toJson()}');
 
       // Set default vehicle if available
-      final firstVehicle = vehicleListResponse.value?.vehicles?.firstOrNull;
+      final firstVehicle = vehicleListResponse.value?.vehicles.firstOrNull;
       if (firstVehicle != null && selectedVehicleId.value.isEmpty) {
         selectedVehicleId.value = firstVehicle.id ?? '';
+        selectedVehicle.value = firstVehicle; // Update selectedVehicle
+        print('Selected default vehicle ID: ${selectedVehicleId.value}');
+      } else {
+        print('No vehicles available or selectedVehicleId is already set');
       }
 
     } catch (error) {
-      print("Error in updateDriverDetails: $error");
+      print("Error in fetchVehiclesList: $error");
+      errorMessage.value = error.toString();
     } finally {
       isLoading.value = false;
     }

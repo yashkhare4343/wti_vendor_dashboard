@@ -421,15 +421,6 @@ class _VehicleListState extends State<VehicleList> {
 
                           SizedBox(height: 16),
 
-                          status =='Verify'? ImageCard(imageUrl: brand, label: 'Brand') : EditableImageCard(
-                            label: 'Brand',
-                            imageUrl: brand,
-                            onEdit: () {},
-                            imageKey: 'brand',
-                          ),
-
-                          SizedBox(height: 16),
-
                           status =='Verify'? ImageCard(imageUrl: insurencePhoto, label: 'Insurance Photo') : EditableImageCard(
                             label: 'Insurance Photo',
                             imageUrl: insurencePhoto,
@@ -600,7 +591,23 @@ class _VehicleListState extends State<VehicleList> {
                             },
                           ),
                           SizedBox(height: 16),
-
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text('Brand',
+                                      textAlign: TextAlign.start,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(brand, textAlign: TextAlign.start),
+                            ],
+                          ),
+                          SizedBox(height: 16),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -614,7 +621,7 @@ class _VehicleListState extends State<VehicleList> {
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('Swift', textAlign: TextAlign.start),
+                              Text(modelType, textAlign: TextAlign.start),
                             ],
                           ),
                           SizedBox(height: 16),

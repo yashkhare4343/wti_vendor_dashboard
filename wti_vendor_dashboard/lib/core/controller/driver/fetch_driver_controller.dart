@@ -56,7 +56,8 @@ class FetchDriverController extends GetxController {
       Map<String, dynamic> requestData = {
         "vendorId": vendorId,
         selectedValued.isEmpty? "undefined": "DriverName" : searchedText,
-        "RegisterStatus": tabName
+        "RegisterStatus": tabName,
+        if(tabName == 'Verified') "RegisterStatus": "Verify"
       };
 
       print('request data is : $requestData');

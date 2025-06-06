@@ -442,6 +442,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   late String currentActiveDriver;
   late String currentDriverName;
   late String currentDriverPhone;
+  bool showDriverError = false; // Track validation error for dropdown
 
   @override
   void initState() {
@@ -513,7 +514,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                       vacantNVerifiedDriverController.selectedDriverId.value = '';
                       await vacantNVerifiedDriverController.fetchVacantDriver(
                           currentActiveDriver, context);
-                      setState(() {});
+                      setState(() {
+                        showDriverError = false; // Reset error on new fetch
+                      });
                     },
                   ),
                 ),
@@ -525,38 +528,54 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   print(
                       'Dropdown drivers: ${drivers.map((d) => {"id": d.id, "name": d.driverName}).toList()}');
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DropdownButton<String>(
-                      hint: const Text("Select Driver"),
-                      value: controller.selectedDriverId.value.isNotEmpty &&
-                          drivers.any((driver) =>
-                          driver.id == controller.selectedDriverId.value)
-                          ? controller.selectedDriverId.value
-                          : null,
-                      isExpanded: true,
-                      onChanged: (String? newValue) {
-                        if (newValue != null &&
-                            drivers.any((driver) => driver.id == newValue)) {
-                          controller.selectedDriverId.value = newValue;
-                          setState(() {});
-                        }
-                      },
-                      items: drivers.isNotEmpty
-                          ? drivers.map((driver) {
-                        return DropdownMenuItem<String>(
-                          value: driver.id,
-                          child: Text(driver.driverName ?? 'Unnamed Driver'),
-                        );
-                      }).toList()
-                          : [
-                        const DropdownMenuItem<String>(
-                          value: null,
-                          enabled: false,
-                          child: Text('No drivers available'),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: DropdownButtonFormField<String>(
+                          hint: const Text("Select Driver"),
+                          value: controller.selectedDriverId.value.isNotEmpty &&
+                              drivers.any((driver) =>
+                              driver.id == controller.selectedDriverId.value)
+                              ? controller.selectedDriverId.value
+                              : null,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: 'Select Driver',
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            errorText: showDriverError
+                                ? 'Please select a driver'
+                                : null, // Show error if validation fails
+                          ),
+                          onChanged: (String? newValue) {
+                            if (newValue != null &&
+                                drivers.any((driver) => driver.id == newValue)) {
+                              controller.selectedDriverId.value = newValue;
+                              setState(() {
+                                showDriverError = false; // Hide error on valid selection
+                              });
+                            }
+                          },
+                          items: drivers.isNotEmpty
+                              ? drivers.map((driver) {
+                            return DropdownMenuItem<String>(
+                              value: driver.id,
+                              child: Text(driver.driverName ?? 'Unnamed Driver'),
+                            );
+                          }).toList()
+                              : [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              enabled: false,
+                              child: Text('No drivers available'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   );
                 }),
                 const SizedBox(height: 16),
@@ -564,6 +583,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   width: 220,
                   child: PrimaryButton(
                     text: 'Set Active Driver',
+                  // Disable if no driver selected
                     onPressed: () {
                       final controller = vacantNVerifiedDriverController;
                       if (controller.selectedDriverId.value.isNotEmpty) {
@@ -578,6 +598,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                           currentActiveDriver = controller.selectedDriverId.value;
                           currentDriverName = selectedDriver.driverName ?? 'N/A';
                           currentDriverPhone = ''; // Phone not available in VacantDriver
+                          showDriverError = false; // Reset error on success
                         });
 
                         // Refetch vacant drivers with new active driver
@@ -595,6 +616,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                           ),
                         );
                       } else {
+                        setState(() {
+                          showDriverError = true; // Show error if no driver selected
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             duration: const Duration(milliseconds: 500),
@@ -610,7 +634,6 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(
@@ -658,7 +681,6 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
               ],
             ),
           ),
@@ -666,9 +688,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       ),
     );
   }
-}
-
-// pending
+}// pending
 Widget pending() {
   return Container(
     padding: const EdgeInsets.all(4.0),

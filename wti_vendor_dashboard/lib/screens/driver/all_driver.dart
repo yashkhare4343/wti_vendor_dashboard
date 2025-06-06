@@ -31,7 +31,7 @@ class AllDriver extends StatefulWidget {
 class _AllDriverState extends State<AllDriver>
     with SingleTickerProviderStateMixin {
   String? _selectedValue;
-  final List<String> tabNames = ['All', 'Pending', 'Verify', 'Reject'];
+  final List<String> tabNames = ['All', 'Pending', 'Verified', 'Reject'];
   String status = 'All'; // Initialize with the first tab
 
   final List<String> _options = ['Driver Name'];
@@ -734,7 +734,7 @@ class _DriverListState extends State<DriverList> {
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   child: pending(),
-                                ): widget.status == 'Verify'? Container(
+                                ): widget.status == 'Verified'? Container(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   child: verify(),

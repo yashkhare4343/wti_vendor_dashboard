@@ -1,31 +1,48 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:get_it/get_it.dart';
-import 'package:wti_vendor_dashboard/utility/constants/strings/string_constants.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/route_management/app_page.dart';
+import 'core/route_management/app_routes.dart';
 import 'firebase_options.dart';
 
+final secureStorage = FlutterSecureStorage();
 final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-  'high_importance_channel', // Must match AndroidManifest
-  'High Importance Notifications',
-  importance: Importance.high,
-);
+FlutterLocalNotificationsPlugin();
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-// getIt
-final GetIt getIt = GetIt.instance();
+
+Future<void> writeData(String key, String value) async {
+  if (Platform.isIOS) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  } else {
+    await secureStorage.write(key: key, value: value);
+  }
+}
+
+Future<String?> readData(String key) async {
+  if (Platform.isIOS) {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  } else {
+    return await secureStorage.read(key: key);
+  }
+}
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print('🔄 Background message received: ${message.messageId}');
+  if (message.notification?.body != null) {
+    await writeData('notification_payload', message.notification!.body!);
+  }
 }
 
 void main() async {
@@ -33,7 +50,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(const MyApp());
 }
 
@@ -45,8 +64,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // This widget is the root of your application.
-  String? _fcmToken = 'Fetching...';
+  void _navigateToConfirmBooking() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        GoRouter.of(context).go(AppRoutes.confirmBooking);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -55,92 +80,85 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initFCM() async {
-    // Request permissions
-    NotificationSettings settings =
-        await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+    await FirebaseMessaging.instance.requestPermission();
+
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      description: 'Used for booking notifications.',
+      importance: Importance.high,
     );
-    print('🛂 User permission status: ${settings.authorizationStatus}');
 
-    // Skip APNs handling on iOS simulator
-    if (Platform.isIOS &&
-        !Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')) {
-      String? apnsToken;
-      do {
-        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        await Future.delayed(Duration(milliseconds: 500));
-      } while (apnsToken == null);
-      print('📲 APNs Token: $apnsToken');
-    } else {
-      print('ℹ️ Skipping APNs token setup (non-iOS or Simulator)');
-    }
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
 
-    // Get FCM token
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("🔑 FCM Token: $token");
-
-    setState(() {
-      _fcmToken = token;
-    });
-
-    // Local notifications
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
-    await _localNotificationsPlugin.initialize(initSettings);
+    await _localNotificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        _navigateToConfirmBooking();
+      },
+    );
 
     await _localNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    print("🔑 FCM Token: $fcmToken");
 
     // Foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📩 Foreground message received!');
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print('📩 Foreground message: ${message.notification?.body}');
 
-      if (notification != null && android != null) {
+      if (message.notification?.body != null) {
+        await writeData('notification_payload', message.notification!.body!);
+      }
+
+      final notification = message.notification;
+      if (notification?.android != null) {
         _localNotificationsPlugin.show(
           notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
+          notification?.title,
+          notification?.body,
+          const NotificationDetails(
             android: AndroidNotificationDetails(
-              _channel.id,
-              _channel.name,
-              icon: '@mipmap/ic_launcher',
-              importance: Importance.max,
+              'high_importance_channel',
+              'High Importance Notifications',
+              importance: Importance.high,
               priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
             ),
           ),
         );
       }
     });
 
-    // Background open
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📲 App opened from background notification: ${message.data}');
+    // Background Tap
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      if (message.notification?.body != null) {
+        await writeData('notification_payload', message.notification!.body!);
+      }
+      _navigateToConfirmBooking();
     });
 
-    // Terminated open
-    RemoteMessage? initialMessage =
-        await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      print(
-          '🚀 App launched from terminated notification: ${initialMessage.data}');
+    // Terminated State
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage?.notification?.body != null) {
+      await writeData('notification_payload', initialMessage!.notification!.body!);
+      _navigateToConfirmBooking();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp.router(
-        routerDelegate: AppPages.router.routerDelegate,
-        routeInformationParser: AppPages.router.routeInformationParser,
-        routeInformationProvider: AppPages.router.routeInformationProvider,
-        title: StringConstants.title,
-        debugShowCheckedModeBanner: false);
+      routerDelegate: AppPages.router.routerDelegate,
+      routeInformationParser: AppPages.router.routeInformationParser,
+      routeInformationProvider: AppPages.router.routeInformationProvider,
+      title: "Booking App",
+      debugShowCheckedModeBanner: false,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:wti_vendor_dashboard/core/route_management/app_routes.dart';
 import 'package:wti_vendor_dashboard/screens/booking/all_booking.dart';
+import 'package:wti_vendor_dashboard/screens/booking/booking_confirmation.dart';
 import 'package:wti_vendor_dashboard/screens/dashboard/dashboard.dart';
 import 'package:wti_vendor_dashboard/screens/driver/driver_bottom_navigation.dart';
 import 'package:wti_vendor_dashboard/screens/login/login.dart';
@@ -39,6 +40,10 @@ class AppPages{
           builder: (context, state) => AllBooking(),
         ),
         GoRoute(
+          path: AppRoutes.allBooking,
+          builder: (context, state) => AllBooking(),
+        ),
+        GoRoute(
           path: AppRoutes.pairVehicle,
           builder: (context, state) => PairVehicle(),
         ),
@@ -46,9 +51,10 @@ class AppPages{
           path: AppRoutes.profile,
           builder: (context, state) => ProfileScreen(),
         ),
-
-
-
+        GoRoute(
+          path: AppRoutes.confirmBooking,
+          builder: (context, state) => BookingConfirmation(),
+        ),
 
       ]
    );

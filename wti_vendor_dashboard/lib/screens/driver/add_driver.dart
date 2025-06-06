@@ -103,7 +103,13 @@ class _AddDriverState extends State<AddDriver> {
                       }
                     }),
                 SizedBox(
-                  height: 8,
+                  height: 16,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text('Date of Birth', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
                 ),
                 Row(
                   children: [
@@ -180,7 +186,13 @@ class _AddDriverState extends State<AddDriver> {
                 }
                 ),
                 SizedBox(
-                  height: 8,
+                  height: 16,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text('Licence Expiry Date', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
                 ),
                 Row(
                   children: [

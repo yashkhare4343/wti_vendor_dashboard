@@ -5,6 +5,7 @@ class AppRoutes{
   static const String driverBottomNavigation = '/driverBottomNavigation';
   static const String vehicleBottomNavigation = '/vehicleBottomNavigation';
   static const String allBooking = '/allBooking';
+  static const String confirmBooking = '/confirmBooking';
   static const String pairVehicle = '/pairVehicle';
   static const String profile = '/profile';
 

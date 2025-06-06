@@ -40,8 +40,7 @@ class AllBooking extends StatefulWidget {
   State<AllBooking> createState() => _AllBookingState();
 }
 
-class _AllBookingState extends State<AllBooking>
-    with SingleTickerProviderStateMixin {
+class _AllBookingState extends State<AllBooking> with SingleTickerProviderStateMixin {
   String? _selectedValue;
   String? _selectedByValue;
 
@@ -54,7 +53,7 @@ class _AllBookingState extends State<AllBooking>
     'Trip Type',
     'Basic Trip Type'
   ];
-  final List<String> _bookingStatusOptions = ['CANCELLED', 'CONFIRMED'];
+  final List<String> _bookingStatusOptions = ['CONFIRMED', 'CANCELLED'];
   final List<String> _tripStateOptions = [
     'NOT_STARTED',
     'STARTED',
@@ -72,9 +71,8 @@ class _AllBookingState extends State<AllBooking>
 
   late TabController _tabController;
   final TextEditingController vehicleController = TextEditingController();
-  // final FetchVehicleController fetchVehicleController = Get.put(FetchVehicleController());
-  final FetchBookingController fetchBookingController =
-      Get.put(FetchBookingController());
+  final TextEditingController bookingDateFilterController = TextEditingController(); // Moved to class level
+  final FetchBookingController fetchBookingController = Get.put(FetchBookingController());
   Timer? _debounce;
 
   String getCurrentDate() {
@@ -86,10 +84,10 @@ class _AllBookingState extends State<AllBooking>
   @override
   void initState() {
     super.initState();
+    // Initialize the date controller with the current date
+    bookingDateFilterController.text = getCurrentDate();
     _tabController = TabController(length: tabNames.length, vsync: this);
-    // Initialize _selectedValue to a valid option or null
     _selectedValue = _options.isNotEmpty ? _options.first : null;
-    // Initialize _selectedByValue based on _selectedValue
     _selectedByValue = _getDefaultSelectedByValue();
 
     _tabController.addListener(() {
@@ -98,6 +96,16 @@ class _AllBookingState extends State<AllBooking>
           status = tabNames[_tabController.index];
         });
 
+        // Fetch bookings with the preserved date
+        if (_selectedValue != null && _selectedByValue != null) {
+          fetchBookingController.fetchBooking(
+            _selectedValue!,
+            _selectedByValue!,
+            bookingDateFilterController.text.trim(),
+            status,
+            context,
+          );
+        }
         print('Selected tab: ${tabNames[_tabController.index]}');
       }
     });
@@ -108,20 +116,18 @@ class _AllBookingState extends State<AllBooking>
     _debounce?.cancel();
     _tabController.dispose();
     vehicleController.dispose();
+    bookingDateFilterController.dispose(); // Dispose the controller
     super.dispose();
   }
 
-  // Helper to get default _selectedByValue based on _selectedValue
   String? _getDefaultSelectedByValue() {
-    if (_selectedValue == 'Booking Status' &&
-        _bookingStatusOptions.isNotEmpty) {
+    if (_selectedValue == 'Booking Status' && _bookingStatusOptions.isNotEmpty) {
       return _bookingStatusOptions.first;
     } else if (_selectedValue == 'Trip State' && _tripStateOptions.isNotEmpty) {
       return _tripStateOptions.first;
     } else if (_selectedValue == 'Trip Type' && _tripTypeOptions.isNotEmpty) {
       return _tripTypeOptions.first;
-    } else if (_selectedValue == 'Basic Trip Type' &&
-        _basicTripTypeOptions.isNotEmpty) {
+    } else if (_selectedValue == 'Basic Trip Type' && _basicTripTypeOptions.isNotEmpty) {
       return _basicTripTypeOptions.first;
     }
     return null;
@@ -129,9 +135,6 @@ class _AllBookingState extends State<AllBooking>
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController bookingDateFilterController =
-        TextEditingController(text: getCurrentDate());
-
     return Scaffold(
       backgroundColor: AppColors.scaffoldBgPrimary1,
       floatingActionButton: SizedBox(
@@ -175,20 +178,6 @@ class _AllBookingState extends State<AllBooking>
                       unselectedLabelColor: Colors.black.withOpacity(0.8),
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                       tabs: tabNames.map((name) => Tab(text: name)).toList(),
-                      onTap: (int index) {
-                        // String tabName = tabNames[index]; // Use if needed
-
-                        if (_selectedValue != null &&
-                            _selectedByValue != null) {
-                          fetchBookingController.fetchBooking(
-                            _selectedValue!,
-                            _selectedByValue!,
-                            bookingDateFilterController.text.trim(),
-                            status, // ← Assuming status is defined
-                            context,
-                          );
-                        }
-                      },
                     ),
                   ),
                   SizedBox(
@@ -211,12 +200,12 @@ class _AllBookingState extends State<AllBooking>
                         );
                         if (picked != null) {
                           bookingDateFilterController.text =
-                              "${picked.year}/${picked.month}/${picked.day}";
+                          "${picked.year}/${picked.month}/${picked.day}";
                           fetchBookingController.fetchBooking(
                             _selectedValue ?? '',
                             _selectedByValue ?? '',
-                            "${picked.year}/${picked.month}/${picked.day}",
-                            status, // ← Assuming status is defined
+                            bookingDateFilterController.text.trim(),
+                            status,
                             context,
                           );
                         }
@@ -243,19 +232,16 @@ class _AllBookingState extends State<AllBooking>
                           focusColor: AppColors.borderColor1,
                           decoration: InputDecoration(
                             labelText: 'Selected For',
-                            labelStyle: TextStyle(color: Colors.black),
+                            labelStyle: TextStyle(color: Colors.black, fontSize: 14),
                             border: OutlineInputBorder(
-                              borderSide:
-                                  BorderSide(color: AppColors.borderColor1),
+                              borderSide: BorderSide(color: AppColors.borderColor1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  BorderSide(color: Colors.grey, width: 1),
+                              borderSide: BorderSide(color: Colors.grey, width: 1),
                             ),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           ),
                           dropdownColor: Colors.white,
                           value: _selectedValue,
@@ -265,7 +251,7 @@ class _AllBookingState extends State<AllBooking>
                               value: value,
                               child: Text(
                                 value,
-                                style: const TextStyle(color: Colors.black),
+                                style: const TextStyle(color: Colors.black, fontSize: 14),
                               ),
                             );
                           }).toList(),
@@ -274,13 +260,12 @@ class _AllBookingState extends State<AllBooking>
                               _selectedValue = newValue;
                               _selectedByValue = _getDefaultSelectedByValue();
                             });
-                            if (_selectedValue != null &&
-                                _selectedByValue != null) {
+                            if (_selectedValue != null && _selectedByValue != null) {
                               fetchBookingController.fetchBooking(
                                 _selectedValue!,
                                 _selectedByValue!,
                                 bookingDateFilterController.text.trim(),
-                                status, // ← Assuming status is defined
+                                status,
                                 context,
                               );
                             }
@@ -298,49 +283,40 @@ class _AllBookingState extends State<AllBooking>
                                 focusColor: AppColors.borderColor1,
                                 decoration: InputDecoration(
                                   labelText: 'Selected By',
-                                  labelStyle: TextStyle(color: Colors.black),
+                                  labelStyle: TextStyle(color: Colors.black, fontSize: 14),
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: AppColors.borderColor1),
+                                    borderSide: BorderSide(color: AppColors.borderColor1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey, width: 1),
+                                    borderSide: BorderSide(color: Colors.grey, width: 1),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 ),
                                 dropdownColor: Colors.white,
                                 value: _selectedByValue,
-                                items:
-                                    _bookingStatusOptions.map((String value) {
+                                items: _bookingStatusOptions.map((String value) {
                                   return DropdownMenuItem<String>(
                                     value: value,
                                     child: Text(
                                       value,
-                                      style:
-                                          const TextStyle(color: Colors.black),
+                                      style: const TextStyle(color: Colors.black, fontSize: 12),
                                     ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   setState(() {
-                                    _selectedByValue =
-                                        newValue; // Fix: Update _selectedByValue
+                                    _selectedByValue = newValue;
                                   });
                                   if (newValue != null) {
-                                    if (_selectedValue != null &&
-                                        _selectedByValue != null) {
-                                      fetchBookingController.fetchBooking(
-                                        _selectedValue!,
-                                        _selectedByValue!,
-                                        bookingDateFilterController.text.trim(),
-                                        status, // ← Assuming status is defined
-                                        context,
-                                      );
-                                    }
+                                    fetchBookingController.fetchBooking(
+                                      _selectedValue!,
+                                      _selectedByValue!,
+                                      bookingDateFilterController.text.trim(),
+                                      status,
+                                      context,
+                                    );
                                   }
                                   print('Selected By: $newValue');
                                 },
@@ -351,19 +327,16 @@ class _AllBookingState extends State<AllBooking>
                                 focusColor: AppColors.borderColor1,
                                 decoration: InputDecoration(
                                   labelText: 'Selected By',
-                                  labelStyle: TextStyle(color: Colors.black),
+                                  labelStyle: TextStyle(color: Colors.black, fontSize: 14),
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: AppColors.borderColor1),
+                                    borderSide: BorderSide(color: AppColors.borderColor1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey, width: 1),
+                                    borderSide: BorderSide(color: Colors.grey, width: 1),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 ),
                                 dropdownColor: Colors.white,
                                 value: _selectedByValue,
@@ -372,27 +345,22 @@ class _AllBookingState extends State<AllBooking>
                                     value: value,
                                     child: Text(
                                       value,
-                                      style:
-                                          const TextStyle(color: Colors.black),
+                                      style: const TextStyle(color: Colors.black, fontSize: 14),
                                     ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   setState(() {
-                                    _selectedByValue =
-                                        newValue; // Fix: Update _selectedByValue
+                                    _selectedByValue = newValue;
                                   });
                                   if (newValue != null) {
-                                    if (_selectedValue != null &&
-                                        _selectedByValue != null) {
-                                      fetchBookingController.fetchBooking(
-                                        _selectedValue!,
-                                        _selectedByValue!,
-                                        bookingDateFilterController.text.trim(),
-                                        status, // ← Assuming status is defined
-                                        context,
-                                      );
-                                    }
+                                    fetchBookingController.fetchBooking(
+                                      _selectedValue!,
+                                      _selectedByValue!,
+                                      bookingDateFilterController.text.trim(),
+                                      status,
+                                      context,
+                                    );
                                   }
                                   print('Selected By: $newValue');
                                 },
@@ -405,17 +373,14 @@ class _AllBookingState extends State<AllBooking>
                                   labelText: 'Selected By',
                                   labelStyle: TextStyle(color: Colors.black),
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: AppColors.borderColor1),
+                                    borderSide: BorderSide(color: AppColors.borderColor1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey, width: 1),
+                                    borderSide: BorderSide(color: Colors.grey, width: 1),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 ),
                                 dropdownColor: Colors.white,
                                 value: _selectedByValue,
@@ -424,27 +389,22 @@ class _AllBookingState extends State<AllBooking>
                                     value: value,
                                     child: Text(
                                       value,
-                                      style:
-                                          const TextStyle(color: Colors.black),
+                                      style: const TextStyle(color: Colors.black, fontSize: 14),
                                     ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   setState(() {
-                                    _selectedByValue =
-                                        newValue; // Fix: Update _selectedByValue
+                                    _selectedByValue = newValue;
                                   });
                                   if (newValue != null) {
-                                    if (_selectedValue != null &&
-                                        _selectedByValue != null) {
-                                      fetchBookingController.fetchBooking(
-                                        _selectedValue!,
-                                        _selectedByValue!,
-                                        bookingDateFilterController.text.trim(),
-                                        status, // ← Assuming status is defined
-                                        context,
-                                      );
-                                    }
+                                    fetchBookingController.fetchBooking(
+                                      _selectedValue!,
+                                      _selectedByValue!,
+                                      bookingDateFilterController.text.trim(),
+                                      status,
+                                      context,
+                                    );
                                   }
                                   print('Selected By: $newValue');
                                 },
@@ -457,54 +417,44 @@ class _AllBookingState extends State<AllBooking>
                                   labelText: 'Selected By',
                                   labelStyle: TextStyle(color: Colors.black),
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: AppColors.borderColor1),
+                                    borderSide: BorderSide(color: AppColors.borderColor1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey, width: 1),
+                                    borderSide: BorderSide(color: Colors.grey, width: 1),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 ),
                                 dropdownColor: Colors.white,
                                 value: _selectedByValue,
-                                items:
-                                    _basicTripTypeOptions.map((String value) {
+                                items: _basicTripTypeOptions.map((String value) {
                                   return DropdownMenuItem<String>(
                                     value: value,
                                     child: Text(
                                       value,
-                                      style:
-                                          const TextStyle(color: Colors.black),
+                                      style: const TextStyle(color: Colors.black, fontSize: 14),
                                     ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   setState(() {
-                                    _selectedByValue =
-                                        newValue; // Fix: Update _selectedByValue
+                                    _selectedByValue = newValue;
                                   });
                                   if (newValue != null) {
-                                    if (_selectedValue != null &&
-                                        _selectedByValue != null) {
-                                      fetchBookingController.fetchBooking(
-                                        _selectedValue!,
-                                        _selectedByValue!,
-                                        bookingDateFilterController.text.trim(),
-                                        status, // ← Assuming status is defined
-                                        context,
-                                      );
-                                    }
+                                    fetchBookingController.fetchBooking(
+                                      _selectedValue!,
+                                      _selectedByValue!,
+                                      bookingDateFilterController.text.trim(),
+                                      status,
+                                      context,
+                                    );
                                   }
                                   print('Selected By: $newValue');
                                 },
                               );
                             }
-                            return SizedBox
-                                .shrink(); // Fallback for when _selectedValue is null
+                            return SizedBox.shrink();
                           },
                         ),
                       ),
@@ -518,10 +468,11 @@ class _AllBookingState extends State<AllBooking>
                   controller: _tabController,
                   children: tabNames.map((tabName) {
                     return BookingList(
-                        selectedValued: _selectedValue ?? '',
-                        selectedByValue: _selectedByValue ?? '',
-                        date: bookingDateFilterController.text.trim(),
-                        status: status);
+                      selectedValued: _selectedValue ?? '',
+                      selectedByValue: _selectedByValue ?? '',
+                      date: bookingDateFilterController.text.trim(),
+                      status: status,
+                    );
                   }).toList(),
                 ),
               ),
@@ -801,7 +752,7 @@ class _BookingListState extends State<BookingList> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                'Amount - ${fetchBookingController.allBookingsResponse.value?.bookings[index].amountToBeCollected ?? ''}',
+                                'Amount - ₹ ${fetchBookingController.allBookingsResponse.value?.bookings[index].totalFare ?? ''}',
                                 style: CommonFonts.bodyText3,
                               ),
                             ),
@@ -1043,7 +994,7 @@ class VehicleDropdown extends StatelessWidget {
 
 
   VehicleDropdown({super.key, this.bookingId, this.vehicleType, this.partnerName, this.status});
- 
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -1094,33 +1045,38 @@ class VehicleDropdown extends StatelessWidget {
             children: [
               Text('Assign booking to driver', ),
               SizedBox(height: 8,),
-              Text(activeDriverController.driverDetailsResponse.value?.driverName??'', ),
-              SizedBox(height: 4,),
-              Text(activeDriverController.driverDetailsResponse.value?.mobileNumber??''),
-              SizedBox(height: 16,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            activeDriverController.activeDriverModel.value?.activeDriver != null?  Column(
                 children: [
-                  SizedBox(
-                    width: 220,
-                    child: status!= 'Assigned'? PrimaryButton(text: 'Assign Driver', onPressed: (){
-                      final selectedVehicle = controller.selectedVehicle.value;
-                      final vehicleId = selectedVehicle?.id;
-                      final vehicleNumber = selectedVehicle?.vehicleNumber;
-                        assignDriverController.submitAssignDriver(bookingId??'',vehicleId??'' , activeDriverController.driverDetailsResponse.value?.id??'', activeDriverController.driverDetailsResponse.value?.driverName??'', vehicleNumber??'', vehicleType??'', partnerName??'', activeDriverController.driverDetailsResponse.value?.mobileNumber??'', context).then((value){
-                          GoRouter.of(context).pop();
-                        });
-                    }): PrimaryButton(text: 'Reassign Driver', onPressed: (){
-                      final selectedVehicle = controller.selectedVehicle.value;
-                      final vehicleId = selectedVehicle?.id;
-                      final vehicleNumber = selectedVehicle?.vehicleNumber;
-                      reassignDriverController.submitReassignDriver(bookingId??'',vehicleId??'' , activeDriverController.driverDetailsResponse.value?.id??'', activeDriverController.driverDetailsResponse.value?.driverName??'', vehicleNumber??'', vehicleType??'', partnerName??'', activeDriverController.driverDetailsResponse.value?.mobileNumber??'', context).then((value){
-                        GoRouter.of(context).pop();
-                      });
-                    }),
-                  ),
+                  Text(activeDriverController.driverDetailsResponse.value?.driverName??'', ),
+                  SizedBox(height: 4,),
+                  Text(activeDriverController.driverDetailsResponse.value?.mobileNumber??''),
+                  SizedBox(height: 16,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        child: status!= 'Assigned'? PrimaryButton(text: 'Assign Driver', onPressed: (){
+                          final selectedVehicle = controller.selectedVehicle.value;
+                          final vehicleId = selectedVehicle?.id;
+                          final vehicleNumber = selectedVehicle?.vehicleNumber;
+                          assignDriverController.submitAssignDriver(bookingId??'',vehicleId??'' , activeDriverController.driverDetailsResponse.value?.id??'', activeDriverController.driverDetailsResponse.value?.driverName??'', vehicleNumber??'', vehicleType??'', partnerName??'', activeDriverController.driverDetailsResponse.value?.mobileNumber??'', context).then((value){
+                            GoRouter.of(context).pop();
+                          });
+                        }): PrimaryButton(text: 'Reassign Driver', onPressed: (){
+                          final selectedVehicle = controller.selectedVehicle.value;
+                          final vehicleId = selectedVehicle?.id;
+                          final vehicleNumber = selectedVehicle?.vehicleNumber;
+                          reassignDriverController.submitReassignDriver(bookingId??'',vehicleId??'' , activeDriverController.driverDetailsResponse.value?.id??'', activeDriverController.driverDetailsResponse.value?.driverName??'', vehicleNumber??'', vehicleType??'', partnerName??'', activeDriverController.driverDetailsResponse.value?.mobileNumber??'', context).then((value){
+                            GoRouter.of(context).pop();
+                          });
+                        }),
+                      ),
+                    ],
+                  )
                 ],
-              )
+              ) : Text('Please pair vehicle first to assign',style: CommonFonts.errorTextStatus,),
+            
             ],
           )
         ],

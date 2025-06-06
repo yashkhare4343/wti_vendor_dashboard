@@ -45,5 +45,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+    <array>
+      <string>fetch</string>
+      <string>remote-notification</string>
+    </array>
+    <key>NSUserNotificationAlertUsageDescription</key>
+    <string>This app needs permission to show notifications.</string>
+    <key>NSUserNotificationSoundUsageDescription</key>
+    <string>This app needs permission to play notification sounds.</string>
+    <key>NSUserNotificationBadgeUsageDescription</key>
+    <string>This app needs permission to update the app badge.</string>
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
 </dict>
 </plist>
