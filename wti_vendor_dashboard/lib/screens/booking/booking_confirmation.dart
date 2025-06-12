@@ -38,8 +38,17 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
   void loadData() {
     parsedData = widget.bookingDetails.entries.toList();
 
-    notificationType = widget.bookingDetails['notificationtype']?.toLowerCase();
-    bookingId = widget.bookingDetails['bookingid'];
+    // Normalize keys to lowercase for safety
+    Map<String, String> lowerCaseMap = {
+      for (var entry in widget.bookingDetails.entries)
+        entry.key.toLowerCase(): entry.value
+    };
+
+    notificationType = lowerCaseMap['notificationtype'];
+    bookingId = lowerCaseMap['bookingid'];
+
+    print("notificationType: $notificationType");
+    print("bookingId: $bookingId");
   }
 
   void onAccept() {

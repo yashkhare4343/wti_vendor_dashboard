@@ -27,7 +27,8 @@ class AuthController extends GetxController {
 
   @override
   void onInit() {
-    super.onInit(); // Initialize timezone data
+    super.onInit();
+    initFCM();// Initialize timezone data
   }
 
   Future<String?> readData(String key) async {
