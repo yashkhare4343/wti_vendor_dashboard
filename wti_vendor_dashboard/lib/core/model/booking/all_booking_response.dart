@@ -560,7 +560,7 @@ class Passenger {
   final String name;
   final String email;
   final num phoneNumber;
-  final num countryCode;
+  final String countryCode;
   final bool messageSend;
 
   Passenger({
@@ -576,7 +576,7 @@ class Passenger {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phoneNumber: json['phone_number'] as num? ?? 0,
-      countryCode: json['country_code'] as num? ?? 0,
+      countryCode: json['country_code'] as String? ?? '',
       messageSend: json['messagesend'] as bool? ?? false,
     );
   }

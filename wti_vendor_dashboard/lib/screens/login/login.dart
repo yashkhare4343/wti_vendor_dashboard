@@ -19,12 +19,20 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    authController.initFCM();
+    super.initState();
+  }
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthController authController = Get.put(AuthController());
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  bool _obscureText = true; // Initialize as true to hide password by default
+  bool _obscureText = true;
+  // Initialize as true to hide password by default
 
   void _revalidate() {
     if (_formKey.currentState != null) {
@@ -43,23 +51,10 @@ class _LoginState extends State<Login> {
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      final userExist = await readData('userExists');
+      print('user exist : $userExist');
       authController.verifyAuth(_emailController.text, _passwordController.text, context);
-      final userExists = await readData('userExists');
-      if (userExists == 'false') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'User does not exist, please register first',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill correct details')),
-      );
+
     }
   }
 

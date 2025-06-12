@@ -77,7 +77,7 @@ class _AllBookingState extends State<AllBooking> with SingleTickerProviderStateM
 
   String getCurrentDate() {
     final now = DateTime.now();
-    final formatter = DateFormat('yyyy/MM/dd');
+    final formatter = DateFormat('yyyy-MM-dd');
     return formatter.format(now);
   }
 
@@ -677,43 +677,38 @@ class _BookingListState extends State<BookingList> {
                       .allBookingsResponse.value?.bookings.length ??
                   0,
               itemBuilder: (context, index) {
-                return Card(
-                  color: Colors.white,
-                  elevation: 0.5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Left side: Name, verification, phone, and license
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Name and verification badge
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.7,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Source - ${fetchBookingController.allBookingsResponse.value?.bookings[index].source.address ?? ''}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.7,
-                                    child: Text(
-                                      'Destination - ${fetchBookingController.allBookingsResponse.value?.bookings[index].destination.address ?? ''}',
+                return GestureDetector(
+                  onTap: () {
+                    final booking = fetchBookingController
+                        .allBookingsResponse.value?.bookings[index];
+                    if (booking != null) {
+                      _bookingDetailsBottomSheet(context, booking, widget.status);
+                    }
+                  },
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 0.5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Left side: Name, verification, phone, and license
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Name and verification badge
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.7,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Source - ${fetchBookingController.allBookingsResponse.value?.bookings[index].source.address ?? ''}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -721,58 +716,72 @@ class _BookingListState extends State<BookingList> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 0, vertical: 2),
-                                    child: tripStatus(fetchBookingController
-                                            .allBookingsResponse
-                                            .value
-                                            ?.bookings[index]
-                                            .tripState ??
-                                        ''),
-                                  )
-                                ],
+                                    SizedBox(width: 8),
+                                    SizedBox(
+                                      width:
+                                          MediaQuery.of(context).size.width * 0.7,
+                                      child: Text(
+                                        'Destination - ${fetchBookingController.allBookingsResponse.value?.bookings[index].destination.address ?? ''}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 0, vertical: 2),
+                                      child: tripStatus(fetchBookingController
+                                              .allBookingsResponse
+                                              .value
+                                              ?.bookings[index]
+                                              .tripState ??
+                                          ''),
+                                    )
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 2),
-                            // Phone number
-                            Text(
-                              'Booking ID - ${fetchBookingController.allBookingsResponse.value?.bookings[index].id ?? ''}',
-                              style: CommonFonts.bodyText3,
-                            ),
-                            SizedBox(height: 8),
-                            // License number (partially masked)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 4, horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.bgGrey1,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Amount - ₹ ${fetchBookingController.allBookingsResponse.value?.bookings[index].totalFare ?? ''}',
+                              SizedBox(height: 2),
+                              // Phone number
+                              Text(
+                                'Booking ID - ${fetchBookingController.allBookingsResponse.value?.bookings[index].id ?? ''}',
                                 style: CommonFonts.bodyText3,
                               ),
-                            ),
-                          ],
-                        ),
-                        // Right side: More options icon
-                        GestureDetector(
-                          onTap: () {
-                            final booking = fetchBookingController
-                                .allBookingsResponse.value?.bookings[index];
-                            if (booking != null) {
-                              _bookingDetailsBottomSheet(context, booking, widget.status);
-                            }
-                          },
-                          child: Icon(
-                            Icons.more_vert,
-                            color: Colors.grey,
+                              SizedBox(height: 8),
+                              // License number (partially masked)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 4, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.bgGrey1,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Amount - ₹ ${fetchBookingController.allBookingsResponse.value?.bookings[index].totalFare ?? ''}',
+                                  style: CommonFonts.bodyText3,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          // Right side: More options icon
+                          GestureDetector(
+                            onTap: () {
+                              final booking = fetchBookingController
+                                  .allBookingsResponse.value?.bookings[index];
+                              if (booking != null) {
+                                _bookingDetailsBottomSheet(context, booking, widget.status);
+                              }
+                            },
+                            child: Icon(
+                              Icons.more_vert,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

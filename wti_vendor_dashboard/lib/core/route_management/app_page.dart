@@ -53,7 +53,7 @@ class AppPages{
         ),
         GoRoute(
           path: AppRoutes.confirmBooking,
-          builder: (context, state) => BookingConfirmation(),
+          builder: (context, state) => BookingConfirmation(bookingDetails: {},),
         ),
 
       ]

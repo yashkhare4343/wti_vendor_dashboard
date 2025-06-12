@@ -27,7 +27,7 @@ class UploadDriverDocumentController extends GetxController{
     try {
       final uploadResponse = await apiService.postMultipart(imageFile);
       if (uploadResponse != null && uploadResponse.fileUploaded) {
-        writeData(imageKey, 'http://65.2.66.230:4000/0auth/aws/image/vendorDriverDocument/${uploadResponse.name}');
+        writeData(imageKey, '${uploadResponse.name}');
         print("Image Uploaded Successfully: ${uploadResponse.name}");
         return uploadResponse;
       }

@@ -26,7 +26,7 @@ class ApiService {
   factory ApiService() => _instance;
 
   // Base URLs
-  final String baseUrl = "http://65.2.66.230:4000/0auth";
+  final String baseUrl = "https://f307-103-100-219-130.ngrok-free.app/0auth";
   final String priceBaseUrl = 'https://global.wticabs.com:4001/0auth/v1';
 
   Future<void> logout(BuildContext context) async {

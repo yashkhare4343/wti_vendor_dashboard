@@ -1,70 +1,67 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wti_vendor_dashboard/common_widgets/buttons/primary_button.dart';
-import 'package:wti_vendor_dashboard/common_widgets/buttons/secondary_button.dart';
 
+import '../../common_widgets/buttons/secondary_button.dart';
+import '../../common_widgets/buttons/primary_button.dart';
+import '../../core/controller/accept_booking_controller/accept_booking_controller.dart';
+import '../../core/route_management/app_routes.dart';
 import '../../utility/constants/colors/app_colors.dart';
 import '../../utility/constants/fonts/common_fonts.dart';
 
 class BookingConfirmation extends StatefulWidget {
-  const BookingConfirmation({super.key});
+  final Map<String, String> bookingDetails;
+
+  const BookingConfirmation({super.key, required this.bookingDetails});
 
   @override
   State<BookingConfirmation> createState() => _BookingConfirmationState();
 }
 
 class _BookingConfirmationState extends State<BookingConfirmation> {
-  List<MapEntry<String, String>> parsedData = [];
+  late List<MapEntry<String, String>> parsedData;
+  String? notificationType;
+  String? bookingId;
+
+  final AcceptBookingController acceptBookingController =
+  Get.put(AcceptBookingController());
 
   @override
   void initState() {
     super.initState();
-    loadNotificationPayload();
+    loadData();
   }
 
-  Future<void> loadNotificationPayload() async {
-    final payload = await readData('notification_payload');
-    print("📦 Raw Payload: $payload");
+  void loadData() {
+    parsedData = widget.bookingDetails.entries.toList();
 
-    if (payload != null) {
-      final lines = payload.split('\n');
-      final entries = lines.map((line) {
-        final parts = line.split(':');
-        final key = parts[0].trim();
-        final value = parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
-        return MapEntry(key, value);
-      }).toList();
-
-      setState(() {
-        parsedData = entries;
-      });
-    }
-  }
-
-  Future<String?> readData(String key) async {
-    if (Platform.isIOS) {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(key);
-    } else {
-      const secureStorage = FlutterSecureStorage();
-      return await secureStorage.read(key: key);
-    }
+    notificationType = widget.bookingDetails['notificationtype']?.toLowerCase();
+    bookingId = widget.bookingDetails['bookingid'];
   }
 
   void onAccept() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking Accepted")),
-    );
-    // Trigger backend call here if needed
+    // Use bookingId and accept booking logic
+    acceptBookingController.verifyAcceptBooking(bookingId ?? '', context);
   }
 
   void onReject() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking Rejected")),
+      const SnackBar(
+        content: Text("Booking Rejected"),
+        backgroundColor: Colors.red,
+      ),
     );
-    // Trigger backend call here if needed
+    GoRouter.of(context).pushReplacement(AppRoutes.dashboard);
+  }
+
+  void onGoToBooking() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Navigating to Booking..."), backgroundColor: Colors.blueAccent,),
+    );
+    GoRouter.of(context).pushReplacement(AppRoutes.allBooking);
   }
 
   @override
@@ -93,7 +90,8 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
                   1: FlexColumnWidth(),
                 },
                 border: TableBorder.all(color: Colors.grey.shade300),
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                defaultVerticalAlignment:
+                TableCellVerticalAlignment.middle,
                 children: [
                   for (var entry in parsedData)
                     TableRow(
@@ -126,19 +124,35 @@ class _BookingConfirmationState extends State<BookingConfirmation> {
               ),
             ),
           ),
+
+          /// Bottom Buttons Based on Type
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: notificationType == 'flashing'
+                ? Row(
               children: [
                 Expanded(
-                  child: SecondaryButton(text: 'Reject', backgroundColor: Colors.red, onPressed: (){}),
+                  child: SecondaryButton(
+                      text: 'Reject',
+                      backgroundColor: Colors.red,
+                      onPressed: onReject),
                 ),
                 const SizedBox(width: 16),
-                Expanded(child: PrimaryButton(text: 'Accept', backgroundColor: Colors.green, onPressed: (){}))
+                Expanded(
+                  child: PrimaryButton(
+                      text: 'Accept',
+                      backgroundColor: Colors.green,
+                      onPressed: onAccept),
+                ),
               ],
-            ),
+            )
+                : PrimaryButton(
+                text: 'Go to Booking',
+                backgroundColor: AppColors.primary,
+                onPressed: onGoToBooking),
           ),
-          SizedBox(height: 50,)
+          const SizedBox(height: 40)
         ],
       ),
     );
