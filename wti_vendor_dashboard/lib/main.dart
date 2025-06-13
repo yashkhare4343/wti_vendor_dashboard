@@ -8,7 +8,6 @@ import 'package:wti_vendor_dashboard/screens/booking/booking_confirmation.dart';
 import 'core/route_management/app_page.dart';
 import 'firebase_options.dart';
 
-
 final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -60,7 +59,26 @@ class _MyAppState extends State<MyApp> {
   Future<void> initFCM() async {
     await FirebaseMessaging.instance.requestPermission();
 
-    const channel = AndroidNotificationChannel(
+    // Register all channels which backend may send
+    const flashingChannel = AndroidNotificationChannel(
+      'flashing_channel',
+      'Flashing Booking Notifications',
+      description: 'Notifications for new flashing bookings.',
+      importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
+    );
+
+    const assignedChannel = AndroidNotificationChannel(
+      'assigned_channel',
+      'Assigned Booking Notifications',
+      description: 'Notifications for assigned bookings.',
+      importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
+    );
+
+    const defaultChannel = AndroidNotificationChannel(
       'high_importance_channel',
       'High Importance Notifications',
       description: 'Used for booking notifications.',
@@ -83,14 +101,21 @@ class _MyAppState extends State<MyApp> {
       },
     );
 
-    await _localNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    final android = _localNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
+    await android?.createNotificationChannel(flashingChannel);
+    await android?.createNotificationChannel(assignedChannel);
+    await android?.createNotificationChannel(defaultChannel);
+
+    // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final title = message.notification?.title ?? "Booking Alert";
       final body = message.notification?.body ?? "You have a new booking";
       final payload = message.data['ordered_data'] ?? "";
+
+      // Choose correct channel from backend payload
+      String channelId = message.notification?.android?.channelId ?? defaultChannel.id;
 
       _localNotificationsPlugin.show(
         message.hashCode,
@@ -98,9 +123,9 @@ class _MyAppState extends State<MyApp> {
         body,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            channel.id,
-            channel.name,
-            importance: Importance.max,
+            channelId,
+            channelId,  // channel name is not required at runtime
+            importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
             playSound: true,
@@ -111,6 +136,7 @@ class _MyAppState extends State<MyApp> {
       );
     });
 
+    // Handle when app opened via notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       final payload = message.data['ordered_data'] ?? "";
       final context = navigatorKey.currentContext;
@@ -119,6 +145,7 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
+    // Handle initial message
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null && initialMessage.data.isNotEmpty) {
       final payload = initialMessage.data['ordered_data'] ?? "";
@@ -142,4 +169,3 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-

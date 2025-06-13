@@ -49,16 +49,45 @@ class AuthController extends GetxController {
   Future<void> initFCM() async {
     await FirebaseMessaging.instance.requestPermission();
 
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    // Create all channels your backend is using
+    const flashingChannel = AndroidNotificationChannel(
+      'flashing_channel',
+      'Flashing Booking Notifications',
+      description: 'Notifications for new flashing bookings.',
+      importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
+    );
+
+    const assignedChannel = AndroidNotificationChannel(
+      'assigned_channel',
+      'Assigned Booking Notifications',
+      description: 'Notifications for assigned bookings.',
+      importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
+    );
+
+    const defaultChannel = AndroidNotificationChannel(
       'high_importance_channel',
       'High Importance Notifications',
       description: 'Used for booking notifications.',
       importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
     );
 
-     fcmToken.value = await FirebaseMessaging.instance.getToken()??'';
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
+    await android?.createNotificationChannel(flashingChannel);
+    await android?.createNotificationChannel(assignedChannel);
+    await android?.createNotificationChannel(defaultChannel);
+
+    // Fetch and print FCM token
+    fcmToken.value = await FirebaseMessaging.instance.getToken() ?? '';
     print("🔑 FCM Token: $fcmToken");
   }
 

@@ -819,7 +819,7 @@ class AccordionCard extends StatefulWidget {
   const AccordionCard({
     super.key,
     required this.booking,
-    this.isExpanded = false,
+    this.isExpanded = true,
     this.onToggle,
   });
 
