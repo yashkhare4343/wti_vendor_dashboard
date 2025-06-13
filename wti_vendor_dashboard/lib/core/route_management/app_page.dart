@@ -9,13 +9,11 @@ import 'package:wti_vendor_dashboard/screens/login/login.dart';
 import 'package:wti_vendor_dashboard/screens/pair_vehicle/pair_vehicle.dart';
 import 'package:wti_vendor_dashboard/screens/profile/profile.dart';
 import 'package:wti_vendor_dashboard/screens/vehicle/vehicle_bottom_navigation.dart';
+import '../../notification_service.dart';
 import '../../screens/splash_screen/splash_screen.dart';
 
 class AppPages {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
   static final GoRouter router = GoRouter(
-    navigatorKey: navigatorKey,   // ✅ very important for terminated state navigation
     routes: [
       GoRoute(
         path: AppRoutes.initialPage,
@@ -59,4 +57,8 @@ class AppPages {
       ),
     ],
   );
+
+  static void handlePendingNavigation() {
+    NotificationService().checkPendingNavigation();
+  }
 }
