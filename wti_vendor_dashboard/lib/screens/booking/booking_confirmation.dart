@@ -17,6 +17,13 @@ class BookingConfirmation extends StatefulWidget {
 
   const BookingConfirmation({super.key, required this.bookingDetails});
 
+  static BookingConfirmation create(Map<String, dynamic> data) {
+    // Convert dynamic map to Map<String, String>
+    final parsed = data.map((key, value) => MapEntry(key.toString(), value.toString()));
+
+    return BookingConfirmation(bookingDetails: parsed);
+  }
+
   @override
   State<BookingConfirmation> createState() => _BookingConfirmationState();
 }

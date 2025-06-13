@@ -893,7 +893,7 @@ class _AccordionCardState extends State<AccordionCard> {
                   _buildDetailRow(
                       'Base Fare', '₹${widget.booking.fareDetails.baseFare}'),
                   _buildDetailRow(
-                      'Total Fare', '₹${widget.booking.fareDetails.totalFare}'),
+                      'Total Fare', '₹${widget.booking.totalFare}'),
                   _buildDetailRow(
                       'Platform Fee', '₹${widget.booking.platformFee}'),
                   _buildDetailRow(
